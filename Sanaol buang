@@ -3,178 +3,215 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
--- Cleanup
-local old = CoreGui:FindFirstChild("JeloHubSettings") or Player.PlayerGui:FindFirstChild("JeloHubSettings")
-if old then old:Destroy() end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "JeloHubSettings"
-pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = Player.PlayerGui end
-
--- MAIN HUB FRAME
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Parent = ScreenGui
-Main.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-Main.Position = UDim2.new(0.5, -95, 0.4, -120)
-Main.Size = UDim2.new(0, 200, 0, 320)
-Main.BorderSizePixel = 2
-Main.BorderColor3 = Color3.fromRGB(255, 0, 0)
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
-
-local TopBar = Instance.new("Frame")
-TopBar.Parent = Main
-TopBar.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-TopBar.Size = UDim2.new(1, 0, 0, 35)
-
-local TopTitle = Instance.new("TextLabel")
-TopTitle.Parent = TopBar
-TopTitle.Text = "🌹 JELO HUB SETTINGS"
-TopTitle.Size = UDim2.new(1, -40, 1, 0)
-TopTitle.Position = UDim2.new(0, 10, 0, 0)
-TopTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-TopTitle.Font = Enum.Font.GothamBold
-TopTitle.TextSize = 12
-TopTitle.BackgroundTransparency = 1
-TopTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-local Container = Instance.new("ScrollingFrame")
-Container.Parent = Main
-Container.BackgroundTransparency = 1
-Container.Position = UDim2.new(0, 10, 0, 40)
-Container.Size = UDim2.new(1, -20, 1, -50)
-Container.ScrollBarThickness = 0
-Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Instance.new("UIListLayout", Container).Padding = UDim.new(0, 8)
-
--- UI ELEMENT FUNCTIONS --
-local function AddLabel(txt)
-    local l = Instance.new("TextLabel")
-    l.Parent = Container
-    l.Text = txt
-    l.Size = UDim2.new(1, 0, 0, 20)
-    l.TextColor3 = Color3.fromRGB(255, 100, 100)
-    l.Font = Enum.Font.GothamBold
-    l.TextSize = 11
-    l.BackgroundTransparency = 1
-    return l
+-- Siguraduhin na walang duplicate na UI bago i-run
+local function Cleanup()
+    local old = CoreGui:FindFirstChild("JeloLocalWindow") or Player.PlayerGui:FindFirstChild("JeloLocalWindow")
+    if old then old:Destroy() end
 end
+Cleanup()
 
-local function AddTextBox(placeholder, callback)
-    local t = Instance.new("TextBox")
-    t.Parent = Container
-    t.PlaceholderText = placeholder
-    t.Text = ""
-    t.Size = UDim2.new(1, 0, 0, 30)
-    t.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-    t.TextColor3 = Color3.fromRGB(255, 255, 255)
-    t.Font = Enum.Font.Gotham
-    t.TextSize = 12
-    Instance.new("UICorner", t).CornerRadius = UDim.new(0, 6)
-    t.FocusLost:Connect(function() callback(t.Text) end)
-    return t
-end
+-- MAIN LIBRARY OBJECT
+local JeloLib = {}
 
-local function AddSwitch(name, callback)
-    local state = false
-    local b = Instance.new("TextButton")
-    b.Parent = Container
-    b.Text = name .. ": OFF"
-    b.Size = UDim2.new(1, 0, 0, 35)
-    b.BackgroundColor3 = Color3.fromRGB(45, 0, 0)
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.GothamSemibold
-    b.TextSize = 12
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+function JeloLib:CreateWindow(hubName)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "JeloLocalWindow"
+    pcall(function() ScreenGui.Parent = CoreGui end)
+    if not ScreenGui.Parent then ScreenGui.Parent = Player:WaitForChild("PlayerGui") end
+    ScreenGui.ResetOnSpawn = false
+
+    -- Main Frame
+    local Main = Instance.new("Frame")
+    Main.Name = "Main"
+    Main.Parent = ScreenGui
+    Main.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+    Main.Position = UDim2.new(0.5, -150, 0.4, -100)
+    Main.Size = UDim2.new(0, 320, 0, 260)
+    Main.BorderSizePixel = 0
+    Main.ClipsDescendants = true -- Mahalaga para sa folding
     
-    b.MouseButton1Click:Connect(function()
-        state = not state
-        b.Text = name .. (state and ": ON" or ": OFF")
-        b.BackgroundColor3 = state and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(45, 0, 0)
-        callback(state)
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromRGB(255, 0, 0)
+    MainStroke.Thickness = 2
+    MainStroke.Parent = Main
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 10)
+    MainCorner.Parent = Main
+
+    -- TopBar
+    local TopBar = Instance.new("Frame")
+    TopBar.Name = "TopBar"
+    TopBar.Parent = Main
+    TopBar.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    TopBar.Size = UDim2.new(1, 0, 0, 35)
+    
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 10)
+    TopCorner.Parent = TopBar
+
+    local Title = Instance.new("TextLabel")
+    Title.Parent = TopBar
+    Title.Text = "🌹 " .. hubName
+    Title.Size = UDim2.new(1, -70, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 14
+    Title.BackgroundTransparency = 1
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- FOLD BUTTON
+    local FoldBtn = Instance.new("TextButton")
+    FoldBtn.Name = "FoldBtn"
+    FoldBtn.Parent = TopBar
+    FoldBtn.Text = "🌹"
+    FoldBtn.Size = UDim2.new(0, 30, 0, 30)
+    FoldBtn.Position = UDim2.new(1, -35, 0, 2.5)
+    FoldBtn.BackgroundTransparency = 1
+    FoldBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FoldBtn.TextSize = 18
+
+    -- Sidebar (Tabs Holder)
+    local Sidebar = Instance.new("ScrollingFrame")
+    Sidebar.Name = "Sidebar"
+    Sidebar.Parent = Main
+    Sidebar.Position = UDim2.new(0, 5, 0, 40)
+    Sidebar.Size = UDim2.new(0, 85, 1, -45)
+    Sidebar.BackgroundTransparency = 1
+    Sidebar.ScrollBarThickness = 0
+    Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    local SidebarLayout = Instance.new("UIListLayout")
+    SidebarLayout.Parent = Sidebar
+    SidebarLayout.Padding = UDim.new(0, 5)
+
+    -- Container for Pages
+    local PageContainer = Instance.new("Frame")
+    PageContainer.Name = "PageContainer"
+    PageContainer.Parent = Main
+    PageContainer.Position = UDim2.new(0, 95, 0, 40)
+    PageContainer.Size = UDim2.new(1, -100, 1, -45)
+    PageContainer.BackgroundTransparency = 1
+
+    -- FOLDING LOGIC
+    local folded = false
+    FoldBtn.MouseButton1Click:Connect(function()
+        folded = not folded
+        local targetSize = folded and UDim2.new(0, 320, 0, 35) or UDim2.new(0, 320, 0, 260)
+        TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = targetSize}):Play()
     end)
-end
 
----------------------------------------------------------
--- BALIK NA YUNG CODINGS MO DITO --
----------------------------------------------------------
-
-AddLabel("--- Speed Settings ---")
-local walkSpeedValue = 16
-AddTextBox("Enter Speed (1-500)", function(text)
-    walkSpeedValue = tonumber(text) or 16
-end)
-
-AddSwitch("Set Speed", function(state)
-    _G.SpeedLoop = state
-    while _G.SpeedLoop do
-        pcall(function() Player.Character.Humanoid.WalkSpeed = walkSpeedValue end)
-        task.wait(0.1)
-    end
-    pcall(function() Player.Character.Humanoid.WalkSpeed = 16 end)
-end)
-
-AddLabel("--- Jump Settings ---")
-local jumpPowerValue = 50
-AddTextBox("Enter Jump Power", function(text)
-    jumpPowerValue = tonumber(text) or 50
-end)
-
-AddSwitch("Set Jump", function(state)
-    pcall(function()
-        Player.Character.Humanoid.UseJumpPower = true
-        Player.Character.Humanoid.JumpPower = state and jumpPowerValue or 50
+    -- DRAGGING LOGIC
+    local dragging, dragStart, startPos
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = Main.Position
+        end
     end)
-end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input) dragging = false end)
 
-AddLabel("--- Body Size ---")
-local sizeValue = 1
-AddTextBox("Enter Size (1-10)", function(text)
-    sizeValue = tonumber(text) or 1
-end)
+    local Tabs = {}
+    function Tabs:AddTab(tabName)
+        local TabBtn = Instance.new("TextButton")
+        TabBtn.Parent = Sidebar
+        TabBtn.Text = tabName
+        TabBtn.Size = UDim2.new(1, 0, 0, 30)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+        TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        TabBtn.Font = Enum.Font.GothamBold
+        TabBtn.TextSize = 10
+        Instance.new("UICorner", TabBtn)
 
-AddSwitch("Set Size", function(state)
-    local char = Player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        local hum = char.Humanoid
-        local s = state and sizeValue or 1
-        pcall(function()
-            hum:FindFirstChild("BodyDepthScale").Value = s
-            hum:FindFirstChild("BodyHeightScale").Value = s
-            hum:FindFirstChild("BodyWidthScale").Value = s
-            hum:FindFirstChild("HeadScale").Value = s
+        local Page = Instance.new("ScrollingFrame")
+        Page.Parent = PageContainer
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.Visible = false
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 0
+        Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        Instance.new("UIListLayout", Page).Padding = UDim.new(0, 5)
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, p in pairs(PageContainer:GetChildren()) do p.Visible = false end
+            for _, b in pairs(Sidebar:GetChildren()) do 
+                if b:IsA("TextButton") then b.TextColor3 = Color3.fromRGB(200, 200, 200) end 
+            end
+            Page.Visible = true
+            TabBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
         end)
-    end
-end)
 
-AddButton = function(txt, func) -- Para sa Close
-    local b = Instance.new("TextButton")
-    b.Parent = Container
-    b.Text = txt
-    b.Size = UDim2.new(1, 0, 0, 30)
-    b.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    b.MouseButton1Click:Connect(func)
+        -- Auto-show first tab
+        if #Sidebar:GetChildren() == 2 then 
+            Page.Visible = true 
+            TabBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+        end
+
+        local Elements = {}
+        function Elements:AddButton(txt, callback)
+            local b = Instance.new("TextButton")
+            b.Parent = Page
+            b.Text = "🌹 " .. txt
+            b.Size = UDim2.new(1, -5, 0, 35)
+            b.BackgroundColor3 = Color3.fromRGB(45, 0, 0)
+            b.TextColor3 = Color3.fromRGB(255, 255, 255)
+            b.Font = Enum.Font.GothamSemibold
+            b.TextSize = 12
+            Instance.new("UICorner", b)
+            b.MouseButton1Click:Connect(callback)
+        end
+
+        function Elements:AddLabel(txt)
+            local l = Instance.new("TextLabel")
+            l.Parent = Page
+            l.Text = txt
+            l.Size = UDim2.new(1, 0, 0, 25)
+            l.TextColor3 = Color3.fromRGB(255, 100, 100)
+            l.BackgroundTransparency = 1
+            l.Font = Enum.Font.GothamBold
+            l.TextSize = 11
+        end
+
+        return Elements
+    end
+    return Tabs
 end
-AddButton("CLOSE HUB", function() ScreenGui:Destroy() end)
 
 ---------------------------------------------------------
--- DRAG LOGIC (Para magalaw ang UI)
-local dragging, dragStart, startPos
-TopBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true dragStart = input.Position startPos = Main.Position
-    end
+-- SETUP NG WINDOW MO (PAG-ADD NG LAMAN)
+---------------------------------------------------------
+
+local window = JeloLib:CreateWindow("JELO HUB LOCAL")
+
+-- TAB 1: MAIN
+local MainTab = window:AddTab("Main")
+MainTab:AddLabel("--- Player Settings ---")
+MainTab:AddButton("Speed 100", function()
+    Player.Character.Humanoid.WalkSpeed = 100
 end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
+MainTab:AddButton("Reset Speed", function()
+    Player.Character.Humanoid.WalkSpeed = 16
 end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+
+-- TAB 2: FARM
+local FarmTab = window:AddTab("Farm")
+FarmTab:AddLabel("--- Auto Farm ---")
+FarmTab:AddButton("Auto Punch", function()
+    print("Auto Punch Activated")
+    -- Ilagay dito ang logic para sa auto punch
+end)
+
+-- TAB 3: SETTINGS
+local SettingTab = window:AddTab("Settings")
+SettingTab:AddButton("Destroy UI", function()
+    Cleanup()
 end)
