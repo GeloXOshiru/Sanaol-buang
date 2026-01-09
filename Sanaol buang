@@ -1,0 +1,161 @@
+local Player = game:GetService("Players").LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Cleanup
+local function cleanup()
+    local old = CoreGui:FindFirstChild("JeloHubGui") or Player.PlayerGui:FindFirstChild("JeloHubGui")
+    if old then old:Destroy() end
+end
+cleanup()
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "JeloHubGui"
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = Player:WaitForChild("PlayerGui") end
+
+-- LOADER
+local Loader = Instance.new("Frame")
+Loader.Parent = ScreenGui
+Loader.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+Loader.Position = UDim2.new(0.5, -100, 0.5, -50)
+Loader.Size = UDim2.new(0, 200, 0, 80)
+Loader.BorderSizePixel = 2
+Loader.BorderColor3 = Color3.fromRGB(255, 0, 0)
+Instance.new("UICorner", Loader).CornerRadius = UDim.new(0, 12)
+
+local WelcomeText = Instance.new("TextLabel")
+WelcomeText.Parent = Loader
+WelcomeText.Text = "Jelo Hub\n🌹🌹🌹"
+WelcomeText.Size = UDim2.new(1, 0, 1, 0)
+WelcomeText.TextColor3 = Color3.fromRGB(255, 0, 0)
+WelcomeText.Font = Enum.Font.GothamBold
+WelcomeText.TextSize = 16
+WelcomeText.BackgroundTransparency = 1
+
+-- MAIN GUI
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+Main.Position = UDim2.new(0.5, -95, 0.4, -120)
+Main.Size = UDim2.new(0, 190, 0, 280)
+Main.BorderSizePixel = 2
+Main.BorderColor3 = Color3.fromRGB(255, 0, 0)
+Main.Visible = false
+Main.ClipsDescendants = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+local TopBar = Instance.new("Frame")
+TopBar.Parent = Main
+TopBar.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+TopBar.Size = UDim2.new(1, 0, 0, 35)
+
+local TopTitle = Instance.new("TextLabel")
+TopTitle.Parent = TopBar
+TopTitle.Text = "🌹 JELO HUB V1"
+TopTitle.Size = UDim2.new(1, -40, 1, 0)
+TopTitle.Position = UDim2.new(0, 10, 0, 0)
+TopTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+TopTitle.Font = Enum.Font.GothamBold
+TopTitle.TextSize = 12
+TopTitle.BackgroundTransparency = 1
+TopTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local FoldBtn = Instance.new("TextButton")
+FoldBtn.Parent = TopBar
+FoldBtn.Text = "🌹"
+FoldBtn.Size = UDim2.new(0, 30, 0, 30)
+FoldBtn.Position = UDim2.new(1, -35, 0, 2.5)
+FoldBtn.BackgroundTransparency = 1
+FoldBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FoldBtn.TextSize = 18
+
+local Container = Instance.new("ScrollingFrame")
+Container.Parent = Main
+Container.BackgroundTransparency = 1
+Container.Position = UDim2.new(0, 10, 0, 45)
+Container.Size = UDim2.new(1, -20, 1, -55)
+Container.ScrollBarThickness = 0
+Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Instance.new("UIListLayout", Container).Padding = UDim.new(0, 6)
+
+-- UI BUILDER FUNCTIONS
+local function AddButton(txt, func)
+    local b = Instance.new("TextButton")
+    b.Parent = Container
+    b.Text = "🌹 " .. txt
+    b.Size = UDim2.new(1, 0, 0, 35)
+    b.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 11
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    b.MouseButton1Click:Connect(func)
+end
+
+-- MAIN FEATURES --
+AddButton("Speed: 100", function()
+    Player.Character.Humanoid.WalkSpeed = 100
+end)
+
+AddButton("Jump: 100", function()
+    Player.Character.Humanoid.JumpPower = 100
+end)
+
+AddButton("Big Size", function()
+    local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        pcall(function()
+            humanoid.BodyHeightScale.Value = 3
+            humanoid.BodyWidthScale.Value = 3
+            humanoid.BodyDepthScale.Value = 3
+            humanoid.HeadScale.Value = 3
+        end)
+    end
+end)
+
+AddButton("Normal Size", function()
+    local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        pcall(function()
+            humanoid.BodyHeightScale.Value = 1
+            humanoid.BodyWidthScale.Value = 1
+            humanoid.BodyDepthScale.Value = 1
+            humanoid.HeadScale.Value = 1
+        end)
+    end
+end)
+
+AddButton("Close Hub", function() ScreenGui:Destroy() end)
+
+-- LOADER & LOGIC --
+local folded = false
+FoldBtn.MouseButton1Click:Connect(function()
+    folded = not folded
+    local targetSize = folded and UDim2.new(0, 190, 0, 35) or UDim2.new(0, 190, 0, 280)
+    TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Size = targetSize}):Play()
+end)
+
+task.spawn(function()
+    task.wait(2.5)
+    Loader:Destroy()
+    Main.Visible = true
+end)
+
+local dragging, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true dragStart = input.Position startPos = Main.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+end)
